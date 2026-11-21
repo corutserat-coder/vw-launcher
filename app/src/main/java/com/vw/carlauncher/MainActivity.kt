@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 101)
         }
         startAutoDayNightTheme()
-    }
+//cat << 'EOF' >> app/src/main/java/com/vw/carlauncher/MainActivity.kt
 
     private fun setupGoogleMapsWindow() {
         val mapsBox = findViewById<View>(R.id.googleMapsContainer)
@@ -91,56 +91,6 @@ class MainActivity : AppCompatActivity() {
             }, Looper.getMainLooper())
         }
     }
-
-    private fun setupGoogleMapsWindow() {
-        val mapsBox = findViewById<View>(R.id.googleMapsContainer)
-        val launchMaps = {
-            val intent = packageManager.getLaunchIntentForPackage("com.google.android.apps.maps")
-            if (intent != null) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    val loc = IntArray(2)
-                    mapsBox.getLocationOnScreen(loc)
-                    val bounds = Rect(loc[0], loc[1], loc[0] + mapsBox.width, loc[1] + mapsBox.height)
-                    try { startActivity(intent, ActivityOptions.makeBasic().setLaunchBounds(bounds).toBundle()) } catch (_: Exception) { startActivity(intent) }
-                } else startActivity(intent)
-            } else Toast.makeText(this, "Google Haritalar yüklü değil", Toast.LENGTH_SHORT).show()
-        }
-        mapsBox.setOnClickListener { launchMaps() }
-        mapsBox.postDelayed({ launchMaps() }, 1200)
-    }
-
-    private fun startAutoDayNightTheme() {
-        themeHandler.post(object : Runnable {
-            override fun run() {
-                val isDay = Calendar.getInstance().get(Calendar.HOUR_OF_DAY) in 7..18
-                findViewById<View>(R.id.rootLayout).setBackgroundColor(Color.parseColor(if (isDay) "#E3EAF2" else "#0F141A"))
-                val tc = if (isDay) Color.parseColor("#0F172A") else Color.WHITE
-                txtSpeed.setTextColor(tc); txtRadioFreq.setTextColor(tc)
-                findViewById<TextView>(R.id.txtMapTitle).setTextColor(tc)
-                findViewById<TextView>(R.id.txtMusicTitle).setTextColor(tc)
-                themeHandler.postDelayed(this, 60000)
-            }
-        })
-    }
-
-    private fun setupLocation() {
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        val req = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000).build()
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            fusedLocationClient.requestLocationUpdates(req, object : LocationCallback() {
-                override fun onLocationResult(res: LocationResult) {
-                    val loc = res.lastLocation ?: return
-                    val kmh = (loc.speed * 3.6).toInt()
-                    txtSpeed.text = kmh.toString()
-                    speedProgress.progress = kmh.coerceAtMost(220)
-                }
-            }, Looper.getMainLooper())
-        }
-    }
-EOF 
-
-cat << 'EOF' >> app/src/main/java/com/vw/carlauncher/MainActivity.kt
 
     private fun setupRadioAndMedia() {
         findViewById<ImageButton>(R.id.btnRadioPrev).setOnClickListener {
