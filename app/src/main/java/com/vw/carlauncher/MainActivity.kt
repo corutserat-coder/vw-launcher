@@ -43,6 +43,7 @@ class MainActivity : AppCompatActivity() {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 101)
         }
         startAutoDayNightTheme()
+    }
 //cat << 'EOF' >> app/src/main/java/com/vw/carlauncher/MainActivity.kt
 
     private fun setupGoogleMapsWindow() {
@@ -63,7 +64,8 @@ class MainActivity : AppCompatActivity() {
         mapsBox.postDelayed({ launchMaps() }, 1200)
     }
 
-    private fun startAutoDayNightTheme() {
+    private fun startAutoDayNightTheme()
+    } {
         themeHandler.post(object : Runnable {
             override fun run() {
                 val isDay = Calendar.getInstance().get(Calendar.HOUR_OF_DAY) in 7..18
