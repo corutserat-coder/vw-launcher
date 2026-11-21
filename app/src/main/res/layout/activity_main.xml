@@ -231,3 +231,91 @@
         <LinearLayout android:id="@+id/dockSlot5" style="@style/DockItemStyle" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
+                <ImageButton
+                    android:id="@+id/btnRadioNext"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_media_next"
+                    app:tint="#FFFFFF" />
+            </LinearLayout>
+            <TextView
+                android:id="@+id/btnOpenRadioApp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Radyo Uygulamasını Aç"
+                android:textColor="#B0BEC5"
+                android:textSize="13sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="185dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/card_bg"
+            android:orientation="vertical"
+            android:padding="16dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Medya Kontrolü"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Spotify / YouTube Music"
+                android:textColor="#B0BEC5"
+                android:textSize="15sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="horizontal">
+                <ImageButton
+                    android:id="@+id/btnMusicPrev"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_media_previous"
+                    app:tint="#FFFFFF" />
+                <ImageButton
+                    android:id="@+id/btnMusicPlayPause"
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:layout_marginHorizontal="24dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_media_play"
+                    app:tint="#00D2FF" />
+                <ImageButton
+                    android:id="@+id/btnMusicNext"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_media_next"
+                    app:tint="#FFFFFF" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/bottomDock"
+        android:layout_width="960dp"
+        android:layout_height="110dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/card_bg"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+        <LinearLayout android:id="@+id/dockSlot0" style="@style/DockItemStyle" />
+        <LinearLayout android:id="@+id/dockSlot1" style="@style/DockItemStyle" />
+        <LinearLayout android:id="@+id/dockSlot2" style="@style/DockItemStyle" />
+        <LinearLayout android:id="@+id/dockSlot3" style="@style/DockItemStyle" />
+        <LinearLayout android:id="@+id/dockSlot4" style="@style/DockItemStyle" />
+        <LinearLayout android:id="@+id/dockSlot5" style="@style/DockItemStyle" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
