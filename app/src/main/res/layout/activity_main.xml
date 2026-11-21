@@ -1,46 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0F141A">
-    <org.osmdroid.views.MapView android:id="@+id/osmMap" android:layout_width="match_parent" android:layout_height="match_parent" />
-    <FrameLayout android:id="@+id/speedContainer" android:layout_width="220dp" android:layout_height="220dp" android:layout_marginStart="28dp" android:layout_marginTop="24dp" android:background="@drawable/card_bg" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent">
+    <FrameLayout android:id="@+id/speedContainer" android:layout_width="210dp" android:layout_height="210dp" android:layout_marginStart="20dp" android:layout_marginTop="20dp" android:background="@drawable/card_bg" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent">
         <ProgressBar android:id="@+id/speedProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="match_parent" android:indeterminate="false" android:max="220" android:progress="0" android:progressDrawable="@drawable/speed_ring" />
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:gravity="center" android:orientation="vertical">
-            <TextView android:id="@+id/txtSpeed" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="#FFFFFF" android:textSize="54sp" android:textStyle="bold" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="km/h" android:textColor="#B0BEC5" android:textSize="16sp" />
+            <TextView android:id="@+id/txtSpeed" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="#FFFFFF" android:textSize="52sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="km/h" android:textColor="#B0BEC5" android:textSize="15sp" />
         </LinearLayout>
     </FrameLayout>
-    <ImageView android:id="@+id/imgVwLogo" android:layout_width="170dp" android:layout_height="170dp" android:layout_marginTop="16dp" android:src="@drawable/vw_logo" app:layout_constraintEnd_toEndOf="@id/speedContainer" app:layout_constraintStart_toStartOf="@id/speedContainer" app:layout_constraintTop_toBottomOf="@id/speedContainer" />
-    <LinearLayout android:id="@+id/navCard" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="20dp" android:layout_marginEnd="20dp" android:background="@drawable/card_bg" android:gravity="center_vertical" android:orientation="horizontal" android:padding="16dp" app:layout_constraintEnd_toStartOf="@id/rightPanel" app:layout_constraintStart_toEndOf="@id/speedContainer" app:layout_constraintTop_toTopOf="@id/speedContainer">
-        <ImageView android:layout_width="56dp" android:layout_height="56dp" android:src="@android:drawable/ic_menu_directions" app:tint="#00D2FF" />
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="14dp" android:orientation="vertical">
-            <TextView android:id="@+id/txtNavDistance" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Rota Bekleniyor" android:textColor="#FFFFFF" android:textSize="26sp" android:textStyle="bold" />
-            <TextView android:id="@+id/txtNavStreet" android:layout_width="wrap_content" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:text="Navigasyon başlatın" android:textColor="#CFD8DC" android:textSize="16sp" />
-        </LinearLayout>
+    <ImageView android:id="@+id/imgVwLogo" android:layout_width="160dp" android:layout_height="160dp" android:layout_marginTop="16dp" android:src="@drawable/vw_logo" app:layout_constraintEnd_toEndOf="@id/speedContainer" app:layout_constraintStart_toStartOf="@id/speedContainer" app:layout_constraintTop_toBottomOf="@id/speedContainer" />
+    <LinearLayout android:id="@+id/googleMapsContainer" android:layout_width="0dp" android:layout_height="0dp" android:layout_marginStart="16dp" android:layout_marginTop="20dp" android:layout_marginEnd="16dp" android:layout_marginBottom="16dp" android:background="@drawable/card_bg" android:gravity="center" android:orientation="vertical" android:padding="16dp" app:layout_constraintBottom_toTopOf="@id/bottomDock" app:layout_constraintEnd_toStartOf="@id/rightPanel" app:layout_constraintStart_toEndOf="@id/speedContainer" app:layout_constraintTop_toTopOf="parent">
+        <ImageView android:layout_width="64dp" android:layout_height="64dp" android:src="@android:drawable/ic_dialog_map" app:tint="#00D2FF" />
+        <TextView android:id="@+id/txtMapTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Google Haritalar'ı Burada Aç" android:textColor="#FFFFFF" android:textSize="22sp" android:textStyle="bold" />
+        <TextView android:id="@+id/txtMapSub" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:gravity="center" android:text="Canlı trafik ve mavi rota için dokunun" android:textColor="#B0BEC5" android:textSize="15sp" />
     </LinearLayout>
-    <LinearLayout android:id="@+id/rightPanel" android:layout_width="380dp" android:layout_height="wrap_content" android:layout_marginTop="24dp" android:layout_marginEnd="28dp" android:orientation="vertical" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent">
-        <LinearLayout android:layout_width="match_parent" android:layout_height="185dp" android:background="@drawable/card_bg" android:orientation="vertical" android:padding="16dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="FM Radyo" android:textColor="#90CAF9" android:textSize="16sp" />
+    <LinearLayout android:id="@+id/rightPanel" android:layout_width="350dp" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:layout_marginEnd="20dp" android:orientation="vertical" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent">
+        <LinearLayout android:id="@+id/radioCard" android:layout_width="match_parent" android:layout_height="175dp" android:background="@drawable/card_bg" android:orientation="vertical" android:padding="14dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="FM Radyo" android:textColor="#90CAF9" android:textSize="15sp" />
             <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center" android:orientation="horizontal">
-                <ImageButton android:id="@+id/btnRadioPrev" android:layout_width="56dp" android:layout_height="56dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@android:drawable/ic_media_previous" app:tint="#FFFFFF" />
-                <TextView android:id="@+id/txtRadioFreq" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="94.5 MHz" android:textColor="#FFFFFF" android:textSize="34sp" android:textStyle="bold" />
-                <ImageButton android:id="@+id/btnRadioNext" android:layout_width="56dp" android:layout_height="56dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@android:drawable/ic_media_next" app:tint="#FFFFFF" />
+                <ImageButton android:id="@+id/btnRadioPrev" android:layout_width="52dp" android:layout_height="52dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@android:drawable/ic_media_previous" app:tint="#FFFFFF" />
+                <TextView android:id="@+id/txtRadioFreq" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="94.5 MHz" android:textColor="#FFFFFF" android:textSize="32sp" android:textStyle="bold" />
+                <ImageButton android:id="@+id/btnRadioNext" android:layout_width="52dp" android:layout_height="52dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@android:drawable/ic_media_next" app:tint="#FFFFFF" />
             </LinearLayout>
             <TextView android:id="@+id/btnOpenRadioApp" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="Radyo Uygulamasını Aç" android:textColor="#B0BEC5" android:textSize="13sp" />
         </LinearLayout>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="185dp" android:layout_marginTop="16dp" android:background="@drawable/card_bg" android:orientation="vertical" android:padding="16dp">
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Medya Kontrolü" android:textColor="#FFFFFF" android:textSize="20sp" android:textStyle="bold" />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Spotify / YouTube Music" android:textColor="#B0BEC5" android:textSize="15sp" />
+        <LinearLayout android:id="@+id/musicCard" android:layout_width="match_parent" android:layout_height="175dp" android:layout_marginTop="14dp" android:background="@drawable/card_bg" android:orientation="vertical" android:padding="14dp">
+            <TextView android:id="@+id/txtMusicTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Medya Kontrolü" android:textColor="#FFFFFF" android:textSize="19sp" android:textStyle="bold" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Müzik çaları açmak için dokunun" android:textColor="#B0BEC5" android:textSize="14sp" />
             <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center" android:orientation="horizontal">
-                <ImageButton android:id="@+id/btnMusicPrev" android:layout_width="64dp" android:layout_height="64dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@android:drawable/ic_media_previous" app:tint="#FFFFFF" />
-                <ImageButton android:id="@+id/btnMusicPlayPause" android:layout_width="72dp" android:layout_height="72dp" android:layout_marginHorizontal="24dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@android:drawable/ic_media_play" app:tint="#00D2FF" />
-                <ImageButton android:id="@+id/btnMusicNext" android:layout_width="64dp" android:layout_height="64dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@android:drawable/ic_media_next" app:tint="#FFFFFF" />
+                <ImageButton android:id="@+id/btnMusicPrev" android:layout_width="60dp" android:layout_height="60dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@android:drawable/ic_media_previous" app:tint="#FFFFFF" />
+                <ImageButton android:id="@+id/btnMusicPlayPause" android:layout_width="68dp" android:layout_height="68dp" android:layout_marginHorizontal="20dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@android:drawable/ic_media_play" app:tint="#00D2FF" />
+                <ImageButton android:id="@+id/btnMusicNext" android:layout_width="60dp" android:layout_height="60dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@android:drawable/ic_media_next" app:tint="#FFFFFF" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-    <LinearLayout android:id="@+id/bottomDock" android:layout_width="960dp" android:layout_height="110dp" android:layout_marginBottom="16dp" android:background="@drawable/card_bg" android:gravity="center" android:orientation="horizontal" android:paddingHorizontal="16dp" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent">
+    <LinearLayout android:id="@+id/bottomDock" android:layout_width="0dp" android:layout_height="105dp" android:layout_marginHorizontal="20dp" android:layout_marginBottom="14dp" android:background="@drawable/card_bg" android:gravity="center" android:orientation="horizontal" android:paddingHorizontal="12dp" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent">
         <LinearLayout android:id="@+id/dockSlot0" style="@style/DockItemStyle" />
         <LinearLayout android:id="@+id/dockSlot1" style="@style/DockItemStyle" />
         <LinearLayout android:id="@+id/dockSlot2" style="@style/DockItemStyle" />
