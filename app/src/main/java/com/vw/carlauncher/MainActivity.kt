@@ -92,8 +92,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }, Looper.getMainLooper())
         }
-    }
-
+    
     private fun setupRadioAndMedia() {
         findViewById<ImageButton>(R.id.btnRadioPrev).setOnClickListener {
             currentFreq = if (currentFreq <= 87.5) 108.0 else currentFreq - 0.1
@@ -145,8 +144,7 @@ class MainActivity : AppCompatActivity() {
         val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         am.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
         am.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, keyCode))
-    }
-
+    
     private fun setupDock() {
         val prefs = getSharedPreferences("dock_prefs", MODE_PRIVATE)
         val ids = listOf(R.id.dockSlot0, R.id.dockSlot1, R.id.dockSlot2, R.id.dockSlot3, R.id.dockSlot4, R.id.dockSlot5)
