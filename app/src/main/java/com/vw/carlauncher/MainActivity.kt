@@ -1,183 +1,264 @@
 package com.vw.carlauncher
+
 import android.Manifest
-import android.annotation.SuppressLint
-import android.app.AlertDialog
-import android.content.*
+import android.app.ActivityOptions
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.location.Location
+import android.graphics.Rect
 import android.media.AudioManager
+import android.media.session.MediaSessionManager
+import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.os.Looper
-import android.preference.PreferenceManager
-import android.provider.Settings
-import android.view.Gravity
 import android.view.KeyEvent
+import android.view.View
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.*
-import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.TilesOverlay
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import java.util.Calendar
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var osmMap: MapView
-    private lateinit var locationOverlay: MyLocationNewOverlay
+
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var txtSpeed: TextView
     private lateinit var speedProgress: ProgressBar
-    private lateinit var txtNavDistance: TextView
-    private lateinit var txtNavStreet: TextView
     private lateinit var txtRadioFreq: TextView
     private var currentFreq = 94.5
-    private val slotIds = listOf(R.id.dockSlot0, R.id.dockSlot1, R.id.dockSlot2, R.id.dockSlot3, R.id.dockSlot4, R.id.dockSlot5)
-
-    private val navReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val dist = intent?.getStringExtra("distance") ?: return
-            val street = intent?.getStringExtra("street") ?: ""
-            if (dist.isNotEmpty()) { txtNavDistance.text = dist; txtNavStreet.text = street }
-        }
-    }
+    private var isPlaying = false
+    private val themeHandler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Configuration.getInstance().load(applicationContext, PreferenceManager.getDefaultSharedPreferences(applicationContext))
-        Configuration.getInstance().userAgentValue = packageName
         setContentView(R.layout.activity_main)
+
         txtSpeed = findViewById(R.id.txtSpeed)
         speedProgress = findViewById(R.id.speedProgress)
-        txtNavDistance = findViewById(R.id.txtNavDistance)
-        txtNavStreet = findViewById(R.id.txtNavStreet)
         txtRadioFreq = findViewById(R.id.txtRadioFreq)
-        setupOsmMap()
+
+        setupLocation()
+        setupGoogleMapsWindow()
+        setupRadioAndMedia()
+        setupDock()
+        checkPermissions()
+        startAutoDayNightTheme()
+    }
+
+    private fun setupGoogleMapsWindow() {
+        val mapsBox = findViewById<View>(R.id.googleMapsContainer)
+        val launchMapsInCenter = {
+            val mapsIntent = packageManager.getLaunchIntentForPackage("com.google.android.apps.maps")
+            if (mapsIntent != null) {
+                mapsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    val loc = IntArray(2)
+                    mapsBox.getLocationOnScreen(loc)
+                    val bounds = Rect(loc[0], loc[1], loc[0] + mapsBox.width, loc[1] + mapsBox.height)
+                    val options = ActivityOptions.makeBasic().setLaunchBounds(bounds)
+                    try {
+                        startActivity(mapsIntent, options.toBundle())
+                    } catch (e: Exception) {
+                        startActivity(mapsIntent)
+                    }
+                } else {
+                    startActivity(mapsIntent)
+                }
+            } else {
+                Toast.makeText(this, "Cihazda Google Haritalar yüklü değil", Toast.LENGTH_SHORT).show()
+            }
+        }
+        mapsBox.setOnClickListener { launchMapsInCenter() }
+        mapsBox.postDelayed({ launchMapsInCenter() }, 1200)
+    }
+
+    private fun startAutoDayNightTheme() {
+        val runnable = object : Runnable {
+            override fun run() {
+                val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+                val isDay = hour in 7..18
+                val root = findViewById<View>(R.id.rootLayout)
+                val mapTitle = findViewById<TextView>(R.id.txtMapTitle)
+                val musicTitle = findViewById<TextView>(R.id.txtMusicTitle)
+                if (isDay) {
+                    root.setBackgroundColor(Color.parseColor("#E3EAF2"))
+                    txtSpeed.setTextColor(Color.parseColor("#0F172A"))
+                    txtRadioFreq.setTextColor(Color.parseColor("#0F172A"))
+                    mapTitle.setTextColor(Color.parseColor("#0F172A"))
+                    musicTitle.setTextColor(Color.parseColor("#0F172A"))
+                } else {
+                    root.setBackgroundColor(Color.parseColor("#0F141A"))
+                    txtSpeed.setTextColor(Color.WHITE)
+                    txtRadioFreq.setTextColor(Color.WHITE)
+                    mapTitle.setTextColor(Color.WHITE)
+                    musicTitle.setTextColor(Color.WHITE)
+                }
+                themeHandler.postDelayed(this, 60000)
+            }
+        }
+        themeHandler.post(runnable)
+    }
+
+    private fun setupLocation() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        setupRadioControls(); setupMusicControls(); setupBottomDock(); checkPermissions()
+        val req = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000).build()
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.requestLocationUpdates(req, object : LocationCallback() {
+                override fun onLocationResult(res: LocationResult) {
+                    val loc = res.lastLocation ?: return
+                    val kmh = (loc.speed * 3.6).toInt()
+                    txtSpeed.text = kmh.toString()
+                    speedProgress.progress = kmh.coerceAtMost(220)
+                }
+            }, Looper.getMainLooper())
+        }
     }
 
-    private fun setupOsmMap() {
-        osmMap = findViewById(R.id.osmMap)
-        osmMap.setTileSource(TileSourceFactory.MAPNIK)
-        osmMap.setMultiTouchControls(true)
-        osmMap.setBuiltInZoomControls(false)
-        osmMap.overlayManager.tilesOverlay.setColorFilter(TilesOverlay.INVERT_COLORS)
-        locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(this), osmMap)
-        locationOverlay.enableMyLocation()
-        locationOverlay.enableFollowLocation()
-        osmMap.overlays.add(locationOverlay)
-        osmMap.controller.setZoom(17.5)
+    private fun setupRadioAndMedia() {
+        val btnRadioPrev = findViewById<ImageButton>(R.id.btnRadioPrev)
+        val btnRadioNext = findViewById<ImageButton>(R.id.btnRadioNext)
+        val btnOpenRadio = findViewById<TextView>(R.id.btnOpenRadioApp)
+        val radioCard = findViewById<View>(R.id.radioCard)
+
+        btnRadioPrev.setOnClickListener {
+            currentFreq = if (currentFreq <= 87.5) 108.0 else currentFreq - 0.1
+            txtRadioFreq.text = String.format(Locale.US, "%.1f MHz", currentFreq)
+            sendBroadcast(Intent("com.android.fmradio.PREV"))
+        }
+
+        btnRadioNext.setOnClickListener {
+            currentFreq = if (currentFreq >= 108.0) 87.5 else currentFreq + 0.1
+            txtRadioFreq.text = String.format(Locale.US, "%.1f MHz", currentFreq)
+            sendBroadcast(Intent("com.android.fmradio.NEXT"))
+        }
+
+        val openRadioAction = View.OnClickListener { openRadioApp() }
+        btnOpenRadio.setOnClickListener(openRadioAction)
+        radioCard.setOnClickListener(openRadioAction)
+
+        val btnMusicPrev = findViewById<ImageButton>(R.id.btnMusicPrev)
+        val btnMusicPlay = findViewById<ImageButton>(R.id.btnMusicPlayPause)
+        val btnMusicNext = findViewById<ImageButton>(R.id.btnMusicNext)
+        val musicCard = findViewById<View>(R.id.musicCard)
+
+        btnMusicPrev.setOnClickListener { sendMediaControl(KeyEvent.KEYCODE_MEDIA_PREVIOUS) }
+        btnMusicNext.setOnClickListener { sendMediaControl(KeyEvent.KEYCODE_MEDIA_NEXT) }
+        btnMusicPlay.setOnClickListener {
+            isPlaying = !isPlaying
+            btnMusicPlay.setImageResource(if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play)
+            sendMediaControl(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
+        }
+        musicCard.setOnClickListener { openMusicApp() }
     }
 
-    override fun onResume() { super.onResume(); osmMap.onResume(); registerReceiver(navReceiver, IntentFilter("com.vw.carlauncher.NAV_UPDATE")) }
-    override fun onPause() { super.onPause(); osmMap.onPause(); unregisterReceiver(navReceiver) }
-
-    @SuppressLint("MissingPermission")
-    private fun startLocationUpdates() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) return
-        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000L).build()
-        fusedLocationClient.requestLocationUpdates(request, object : LocationCallback() {
-            override fun onLocationResult(result: LocationResult) {
-                val loc: Location = result.lastLocation ?: return
-                val speedKmh = (loc.speed * 3.6).toInt()
-                txtSpeed.text = speedKmh.toString()
-                speedProgress.progress = speedKmh.coerceAtMost(220)
-                osmMap.controller.animateTo(GeoPoint(loc.latitude, loc.longitude))
-                if (loc.hasBearing() && loc.speed > 1.5f) osmMap.mapOrientation = -loc.bearing
+    private fun openRadioApp() {
+        val pm = packageManager
+        val knownRadios = listOf("com.ts.mainui", "com.xyauto.fm", "com.atc.radio", "com.android.fmradio", "com.qf.radio", "com.tw.radio")
+        for (pkg in knownRadios) {
+            pm.getLaunchIntentForPackage(pkg)?.let { startActivity(it); return }
+        }
+        for (app in pm.getInstalledApplications(0)) {
+            if (app.packageName.contains("radio", true) || app.packageName.contains(".fm", true)) {
+                pm.getLaunchIntentForPackage(app.packageName)?.let { startActivity(it); return }
             }
-        }, Looper.getMainLooper())
+        }
+        Toast.makeText(this, "Radyo uygulaması bulunamadı, alttaki slota basılı tutup atayın", Toast.LENGTH_SHORT).show()
     }
 
-    private fun setupRadioControls() {
-        findViewById<ImageButton>(R.id.btnRadioPrev).setOnClickListener {
-            currentFreq = ((currentFreq - 0.1) * 10).toInt() / 10.0
-            if (currentFreq < 87.5) currentFreq = 108.0
-            txtRadioFreq.text = "$currentFreq MHz"
+    private fun openMusicApp() {
+        val pm = packageManager
+        val knownPlayers = listOf("com.spotify.music", "com.google.android.apps.youtube.music", "com.android.music", "com.maxmpz.audioplayer")
+        for (pkg in knownPlayers) {
+            pm.getLaunchIntentForPackage(pkg)?.let { startActivity(it); return }
         }
-        findViewById<ImageButton>(R.id.btnRadioNext).setOnClickListener {
-            currentFreq = ((currentFreq + 0.1) * 10).toInt() / 10.0
-            if (currentFreq > 108.0) currentFreq = 87.5
-            txtRadioFreq.text = "$currentFreq MHz"
+        try {
+            startActivity(Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MUSIC))
+        } catch (e: Exception) {
+            Toast.makeText(this, "Müzik uygulaması bulunamadı", Toast.LENGTH_SHORT).show()
         }
-        findViewById<TextView>(R.id.btnOpenRadioApp).setOnClickListener {
-            val radioPackages = listOf("com.ts.MainUI", "com.atc.radio", "com.xyauto.radio", "com.qf.radio")
-            for (pkg in radioPackages) {
-                val intent = packageManager.getLaunchIntentForPackage(pkg)
-                if (intent != null) { startActivity(intent); return@setOnClickListener }
+    }
+
+    private fun sendMediaControl(keyCode: Int) {
+        try {
+            val msm = getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
+            val controllers = msm.getActiveSessions(null)
+            if (controllers.isNotEmpty()) {
+                val tc = controllers[0].transportControls
+                when (keyCode) {
+                    KeyEvent.KEYCODE_MEDIA_NEXT -> tc.skipToNext()
+                    KeyEvent.KEYCODE_MEDIA_PREVIOUS -> tc.skipToPrevious()
+                    KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> if (isPlaying) tc.play() else tc.pause()
+                }
+                return
             }
-            Toast.makeText(this, "Radyo uygulamasını alt bara basılı tutup atayabilirsiniz", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun setupMusicControls() {
+        } catch (_: Exception) {}
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        fun sendMediaKey(keyCode: Int) {
-            audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
-            audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, keyCode))
-        }
-        findViewById<ImageButton>(R.id.btnMusicPrev).setOnClickListener { sendMediaKey(KeyEvent.KEYCODE_MEDIA_PREVIOUS) }
-        findViewById<ImageButton>(R.id.btnMusicPlayPause).setOnClickListener { sendMediaKey(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) }
-        findViewById<ImageButton>(R.id.btnMusicNext).setOnClickListener { sendMediaKey(KeyEvent.KEYCODE_MEDIA_NEXT) }
+        audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
+        audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, keyCode))
     }
 
-    private fun setupBottomDock() {
-        val prefs = getSharedPreferences("dock_prefs", Context.MODE_PRIVATE)
-        val defaultPackages = listOf("com.google.android.apps.maps", "com.spotify.music", "com.android.settings", "com.android.chrome", "com.google.android.youtube", "com.android.dialer")
-        slotIds.forEachIndexed { index, viewId ->
-            val container = findViewById<LinearLayout>(viewId)
-            val savedPkg = prefs.getString("slot_$index", defaultPackages[index]) ?: defaultPackages[index]
-            renderDockSlot(container, index, savedPkg)
+    private fun setupDock() {
+        val prefs = getSharedPreferences("dock_prefs", MODE_PRIVATE)
+        val slotIds = listOf(R.id.dockSlot0, R.id.dockSlot1, R.id.dockSlot2, R.id.dockSlot3, R.id.dockSlot4, R.id.dockSlot5)
+        val defaultPkgs = listOf("com.google.android.apps.maps", "com.spotify.music", "com.android.settings", "com.android.chrome", "com.google.android.youtube", "com.android.dialer")
+
+        slotIds.forEachIndexed { index, id ->
+            val slot = findViewById<LinearLayout>(id)
+            val savedPkg = prefs.getString("slot_$index", defaultPkgs[index]) ?: defaultPkgs[index]
+            renderDockSlot(slot, savedPkg)
+
+            slot.setOnClickListener {
+                val pkg = prefs.getString("slot_$index", defaultPkgs[index]) ?: ""
+                packageManager.getLaunchIntentForPackage(pkg)?.let { startActivity(it) }
+                    ?: Toast.makeText(this, "Basılı tutup uygulama atayın", Toast.LENGTH_SHORT).show()
+            }
+            slot.setOnLongClickListener {
+                showAppPicker(index, slot, prefs)
+                true
+            }
         }
     }
 
-    private fun renderDockSlot(container: LinearLayout, slotIndex: Int, packageName: String) {
-        container.removeAllViews()
+    private fun renderDockSlot(slot: LinearLayout, pkg: String) {
+        slot.removeAllViews()
         val pm = packageManager
         val iconView = ImageView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(54, 54)
-            try { setImageDrawable(pm.getApplicationIcon(packageName)) } catch (e: Exception) { setImageResource(android.R.drawable.sym_def_app_icon) }
+            layoutParams = LinearLayout.LayoutParams(68, 68)
+            try { setImageDrawable(pm.getApplicationIcon(pkg)) } catch (e: Exception) { setImageResource(android.R.drawable.sym_def_app_icon) }
         }
         val labelView = TextView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 6 }
-            setTextColor(Color.WHITE); textSize = 12f; gravity = Gravity.CENTER; maxLines = 1
-            text = try { pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString() } catch (e: Exception) { "Uygulama Seç" }
+            textSize = 12f
+            setTextColor(Color.WHITE)
+            maxLines = 1
+            text = try { pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)) } catch (e: Exception) { "Uygulama" }
         }
-        container.addView(iconView); container.addView(labelView)
-        container.setOnClickListener {
-            val launchIntent = pm.getLaunchIntentForPackage(packageName)
-            if (launchIntent != null) startActivity(launchIntent) else showAppPickerDialog(container, slotIndex)
-        }
-        container.setOnLongClickListener { showAppPickerDialog(container, slotIndex); true }
+        slot.addView(iconView)
+        slot.addView(labelView)
     }
 
-    private fun showAppPickerDialog(container: LinearLayout, slotIndex: Int) {
+    private fun showAppPicker(index: Int, slot: LinearLayout, prefs: android.content.SharedPreferences) {
         val pm = packageManager
-        val apps = pm.queryIntentActivities(Intent(Intent.ACTION_MAIN, null).apply { addCategory(Intent.CATEGORY_LAUNCHER) }, 0).sortedBy { it.loadLabel(pm).toString() }
-        val appNames = apps.map { it.loadLabel(pm).toString() }.toTypedArray()
-        AlertDialog.Builder(this).setTitle("Slot ${slotIndex + 1} İçin Uygulama Seç").setItems(appNames) { _, which ->
-            val selectedPkg = apps[which].activityInfo.packageName
-            getSharedPreferences("dock_prefs", Context.MODE_PRIVATE).edit().putString("slot_$slotIndex", selectedPkg).apply()
-            renderDockSlot(container, slotIndex, selectedPkg)
-        }.show()
+        val intent = Intent(Intent.ACTION_MAIN, null).apply { addCategory(Intent.CATEGORY_LAUNCHER) }
+        val apps = pm.queryIntentActivities(intent, 0).sortedBy { it.loadLabel(pm).toString() }
+        val names = apps.map { it.loadLabel(pm).toString() }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("Slot ${index + 1} İçin Uygulama Seç")
+            .setItems(names) { _, which ->
+                val selectedPkg = apps[which].activityInfo.packageName
+                prefs.edit().putString("slot_$index", selectedPkg).apply()
+                renderDockSlot(slot, selectedPkg)
+            }
+            .show()
     }
 
     private fun checkPermissions() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE), 100)
-        } else { startLocationUpdates() }
-        val enabledListeners = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
-        if (enabledListeners == null || !enabledListeners.contains(packageName)) {
-            Toast.makeText(this, "Navigasyon yönleri için Bildirim Erişimi izni verin", Toast.LENGTH_LONG).show()
-            startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 101)
         }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 100 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) startLocationUpdates()
     }
 }
